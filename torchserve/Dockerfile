@@ -1,0 +1,11 @@
+FROM pytorch/torchserve:latest-cpu
+
+ENV APP_DIR='/build'
+WORKDIR $APP_DIR
+COPY . $APP_DIR
+
+ENV PYTHONUNBUFFERED=TRUE
+
+EXPOSE 8080 8081 8082 7070 7071
+
+CMD ./start.sh

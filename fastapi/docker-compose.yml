@@ -1,0 +1,8 @@
+version: '3'
+services:
+  huggingface:
+    image: hf_fastapi
+    ports:
+      - 8081:8081
+    environment:
+      HTTP_PORT: 8081

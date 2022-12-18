@@ -1,0 +1,11 @@
+.DS_Store
+.bsp
+torchserve/model_store/
+utils/bert_fill_mask/
+utils/bert_fill_mask_onnx/
+utils/bert_fill_mask_traced/
+utils/codegen_text_generation/
+utils/codegen_text_generation_onnx/
+utils/codegen_text_generation_traced/
+utils/codegen_6b_text_generation/
+utils/codegen_6b_text_generation_onnx/

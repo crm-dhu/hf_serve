@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  flask:
+    image: hf_flask
+    links:
+      - locust
+  fastapi:
+    image: hf_fastapi
+    links:
+      - locust
+  torchserve:
+    image: hf_torchserve
+    links:
+      - locust
+  locust:
+    image: locustio/locust
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./:/mnt/locust
+    command: -f /mnt/locust/locustfile.py
