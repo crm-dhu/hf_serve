@@ -1,8 +1,8 @@
 from transformers import AutoTokenizer, AutoModelForMaskedLM
 from onnxruntime import InferenceSession
+from scipy import special as sp
 import torch
 import numpy as np
-from scipy import special as sp
 
 class BertFillMask():
 
