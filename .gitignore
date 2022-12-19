@@ -1,5 +1,6 @@
 .DS_Store
 .bsp
+.vscode/
 torchserve/model_store/
 utils/bert_fill_mask/
 utils/bert_fill_mask_onnx/
