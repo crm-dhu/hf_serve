@@ -53,7 +53,7 @@ if __name__ == "__main__":
     # config = BertConfig()
     # onnx_config = BertOnnxConfig(config)
     # print(list(onnx_config.inputs.keys()))
-    pipeline = EagerBertFillMask("./bert_fill_mask_onnx")
+    pipeline = EagerBertFillMask("./bert_fill_mask")
     text = "[MASK] is a music instrument."
     print(pipeline(text))
 
