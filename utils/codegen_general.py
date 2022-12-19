@@ -60,7 +60,7 @@ class CodeGenTextGen():
 
 if __name__ == "__main__":
     for fmt in ["huggingface", "torchscript", "onnx"]:
-        pipeline = CodeGenTextGen("./codegen_text_generation", "onnx")
+        pipeline = CodeGenTextGen("./codegen_text_generation", fmt)
         text = "This is a great"
 
         import time
