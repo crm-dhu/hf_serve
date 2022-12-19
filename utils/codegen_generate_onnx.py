@@ -2,8 +2,6 @@ from transformers import AutoTokenizer
 from onnxruntime import InferenceSession
 import torch
 import numpy as np
-import random
-from scipy.special import softmax
 
 class EagerCodeGenTextGenerator():
 
@@ -21,20 +19,19 @@ class EagerCodeGenTextGenerator():
         # forward
         for _ in range(self.new_tokens):
             # model_outputs = self.session.run(output_names=["logits"], input_feed={"input_ids": input_ids, "attention_mask": attention_mask})
-            model_outputs = self.session.run(output_names=["logits"], input_feed=dict(model_inputs))
+            input_feed = {"input_ids": input_ids, "attention_mask": attention_mask}
+            model_outputs = self.session.run(output_names=["logits"], input_feed=input_feed)
             next_token_logits = model_outputs[0][:, -1, :]
-            next_token_scores = next_token_logits
-            probs = np.squeeze(softmax(next_token_scores, -1))
-            next_tokens = np.random.choice(np.arange(len(probs)), size=1, p=probs)
-            input_ids = np.concatenate([input_ids, np.expand_dims(next_tokens, 0)], axis=-1)
-            model_inputs["input_ids"] = input_ids
-            attention_mask = np.concatenate([attention_mask, np.array([[1]])], axis=-1)
-            model_inputs["attention_mask"] = attention_mask
+            next_token_scores = torch.from_numpy(next_token_logits)
+            probs = torch.nn.functional.softmax(next_token_scores, dim=-1)
+            next_tokens = torch.multinomial(probs, num_samples=1).numpy()
+            input_ids = np.concatenate([input_ids, next_tokens], axis=-1)
+            attention_mask = np.concatenate([attention_mask, np.ones_like(next_tokens)], axis=-1)
         return self.tokenizer.batch_decode(input_ids)
 
 if __name__ == "__main__":
     pipeline = EagerCodeGenTextGenerator("./codegen_text_generation")
-    text = "This is a great"
+    text = "This is a great" 
 
     import time
     t0 = time.time()

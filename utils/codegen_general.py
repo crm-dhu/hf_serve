@@ -1,13 +1,14 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM
+import numpy as np
+import torch
 from onnxruntime import InferenceSession
 from scipy import special as sp
-import torch
-import numpy as np
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
 
 class CodeGenTextGen():
 
     def __init__(self, model_path, model_format):
-        self.new_tokens = 100
+        self.new_tokens = 20
         self.model_format = model_format
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         if model_format == "torchscript":
@@ -33,11 +34,11 @@ class CodeGenTextGen():
                 input_feed = {"input_ids": self.input_ids, "attention_mask": self.attention_mask}
                 model_outputs = self.model.run(output_names=["logits"], input_feed=input_feed)
                 next_token_logits = model_outputs[0][:, -1, :]
-                next_token_scores = sp.softmax(next_token_logits, -1)
-                probs = np.squeeze(next_token_scores)
-                next_tokens = np.random.choice(np.arange(len(probs)), size=1, p=probs)
-                self.input_ids = np.concatenate([self.input_ids, np.expand_dims(next_tokens, 0)], axis=-1)
-                self.attention_mask = np.concatenate([self.attention_mask, np.array([[1]])], axis=-1)
+                next_token_scores = torch.from_numpy(next_token_logits)
+                probs = torch.nn.functional.softmax(next_token_scores, dim=-1)
+                next_tokens = torch.multinomial(probs, num_samples=1).numpy()
+                self.input_ids = np.concatenate([self.input_ids, next_tokens], axis=-1)
+                self.attention_mask = np.concatenate([self.attention_mask, np.ones_like(next_tokens)], axis=-1)
         else:
             for _ in range(self.new_tokens):
                 model_outputs = self.model(input_ids=self.input_ids)
@@ -61,7 +62,7 @@ class CodeGenTextGen():
 if __name__ == "__main__":
     for fmt in ["huggingface", "torchscript", "onnx"]:
         pipeline = CodeGenTextGen("./codegen_text_generation", fmt)
-        text = "This is a great"
+        text = ["This is a great" for _ in range(1)]
 
         import time
         t0 = time.time()
