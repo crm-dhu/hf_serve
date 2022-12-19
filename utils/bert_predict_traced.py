@@ -16,7 +16,7 @@ class TracedBertFillMask():
         input_ids = model_inputs["input_ids"]
         attention_mask = model_inputs["attention_mask"]
         # forward
-        model_outputs = self.model(input_ids, attention_mask)
+        model_outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
         # postprocess
         input_ids = input_ids[0]
         outputs = model_outputs[0]
@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     import time
     t0 = time.time()
-    K = 100
+    K = 10
     for _ in range(K):
         pipeline(text)
     t1 = time.time()

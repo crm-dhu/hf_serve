@@ -14,10 +14,12 @@ class EagerBertFillMask():
 
         # preprocess
         model_inputs = self.tokenizer(text, return_tensors='np')
-        input_ids = model_inputs["input_ids"][0]
+        input_ids = model_inputs["input_ids"]
+        attention_mask = model_inputs["attention_mask"]
         # forward
         model_outputs = self.session.run(output_names=["logits"], input_feed=dict(model_inputs))
         # postprocess
+        input_ids =input_ids[0]
         outputs = model_outputs[0]
         masked_index = np.squeeze(np.nonzero(input_ids == self.tokenizer.mask_token_id), -1)
         logits = outputs[0, masked_index, :]
@@ -59,7 +61,7 @@ if __name__ == "__main__":
 
     import time
     t0 = time.time()
-    K = 100
+    K = 10
     for _ in range(K):
         pipeline(text)
     t1 = time.time()
