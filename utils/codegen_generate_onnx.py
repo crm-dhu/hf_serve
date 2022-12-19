@@ -8,7 +8,7 @@ from scipy.special import softmax
 class EagerCodeGenTextGenerator():
 
     def __init__(self, model_path):
-        self.new_tokens = 1
+        self.new_tokens = 100
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         self.session = InferenceSession(f"{model_path}/model.onnx")
 
@@ -33,7 +33,7 @@ class EagerCodeGenTextGenerator():
         return self.tokenizer.batch_decode(input_ids)
 
 if __name__ == "__main__":
-    pipeline = EagerCodeGenTextGenerator("./codegen_6b_text_generation_onnx")
+    pipeline = EagerCodeGenTextGenerator("./codegen_text_generation")
     text = "This is a great"
 
     import time

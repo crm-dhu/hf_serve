@@ -49,7 +49,7 @@ class TracedBertFillMask():
         return result
 
 if __name__ == "__main__":
-    pipeline = TracedBertFillMask("./bert_fill_mask_traced")
+    pipeline = TracedBertFillMask("./bert_fill_mask")
     text = "[MASK] is a music instrument."
     print(pipeline(text))
 

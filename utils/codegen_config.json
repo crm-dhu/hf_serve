@@ -1,15 +1,15 @@
 {
-    "model_name":"Salesforce/codegen-6B-nl",
+    "model_name":"Salesforce/codegen-350M-nl",
     "mode":"text_generation",
     "do_lower_case":true,
     "num_labels":"2",
-    "save_mode":"pretrained",
+    "save_mode":"torchscript",
     "max_length":"50",
     "captum_explanation":true,
     "embedding_name": "codegen",
     "FasterTransformer":false,
     "BetterTransformer":false,
     "model_parallel":false,
-    "output_dir":"codegen_6b_text_generation"
+    "output_dir":"codegen_text_generation"
    }
    
