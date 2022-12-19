@@ -3,13 +3,13 @@
     "mode":"fill_mask",
     "do_lower_case":true,
     "num_labels":"2",
-    "save_mode":"torchscript",
+    "save_mode":"pretrained",
     "max_length":"150",
     "captum_explanation":true,
     "embedding_name": "bert",
     "FasterTransformer":false,
     "BetterTransformer":false,
     "model_parallel":false,
-    "output_dir":"bert_fill_mask_traced"
+    "output_dir":"bert_fill_mask"
    }
    
