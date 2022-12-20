@@ -1,10 +1,11 @@
-from transformers import AutoTokenizer, AutoModelForMaskedLM
-from onnxruntime import InferenceSession
-from scipy import special as sp
-import torch
 import numpy as np
+import torch
+from BaseAiModel import BaseAiModel
+from onnxruntime import InferenceSession
+from transformers import AutoModelForMaskedLM, AutoTokenizer
 
-class BertFillMask():
+
+class BertFillMask(BaseAiModel):
 
     def __init__(self, model_path, model_format):
         self.top_k = 5
@@ -44,15 +45,12 @@ class BertFillMask():
 
         if self.model_format == "onnx":
             masked_index = np.squeeze(np.nonzero(input_ids == self.tokenizer.mask_token_id), -1)
-            logits = outputs[0, masked_index, :]
-            probs = sp.softmax(logits, -1)
-            predictions = np.argsort(-probs, -1)[:, :self.top_k]
-            values = probs[:, predictions[0]]
+            logits = torch.from_numpy(outputs[0, masked_index, :])
         else:
             masked_index = torch.nonzero(input_ids == self.tokenizer.mask_token_id, as_tuple=False).squeeze(-1)
             logits = outputs[0, masked_index, :]
-            probs = logits.softmax(dim=-1)
-            values, predictions = probs.topk(self.top_k)
+        probs = logits.softmax(dim=-1)
+        values, predictions = probs.topk(self.top_k)
         
         result = []
         single_mask = values.shape[0] == 1
@@ -76,11 +74,6 @@ class BertFillMask():
         if single_mask:
             result = result[0]
         return result
-
-    def __call__(self, text):
-        self.preprocess(text)
-        self.forward()
-        return self.postprocess()
         
 
 if __name__ == "__main__":

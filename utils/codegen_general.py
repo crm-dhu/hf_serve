@@ -1,11 +1,12 @@
 import numpy as np
 import torch
+from BaseAiModel import BaseAiModel
 from onnxruntime import InferenceSession
 from scipy import special as sp
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
-class CodeGenTextGen():
+class CodeGenTextGen(BaseAiModel):
 
     def __init__(self, model_path, model_format):
         self.new_tokens = 20
@@ -53,11 +54,6 @@ class CodeGenTextGen():
     def postprocess(self):
         return self.tokenizer.batch_decode(self.input_ids)
 
-
-    def __call__(self, text):
-        self.preprocess(text)
-        self.forward()
-        return self.postprocess()
 
 if __name__ == "__main__":
     for fmt in ["huggingface", "torchscript", "onnx"]:
