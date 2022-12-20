@@ -49,7 +49,7 @@ class CodeGenTextGen(BaseAiModel):
                     next_token_logits = model_outputs["logits"][:, -1, :]
                 else:
                     next_token_logits = model_outputs[0][:, -1, :]
-                next_token_scores = self.top_p_sample(next_token_logits)
+                next_token_scores = self.nucleus_sample(next_token_logits)
                 probs = torch.nn.functional.softmax(next_token_scores, dim=-1)
                 next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
                 self.input_ids = torch.cat([self.input_ids, next_tokens[:, None]], dim=-1)
