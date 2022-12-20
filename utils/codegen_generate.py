@@ -20,14 +20,14 @@ class EagerCodeGenTextGenerator():
         for _ in range(self.new_tokens):
             model_outputs = self.model(**model_inputs)
             next_token_logits = model_outputs.logits[:, -1, :]
-            next_token_scores = self.top_p_sample(next_token_logits)
+            next_token_scores = self.nucleus_sample(next_token_logits)
             probs = torch.nn.functional.softmax(next_token_scores, dim=-1)
             next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
             input_ids = torch.cat([input_ids, next_tokens[:, None]], dim=-1)
             model_inputs["input_ids"] = input_ids
         # print(input_ids)
         return self.tokenizer.batch_decode(input_ids)
-    def top_p_sample(self, scores):
+    def nucleus_sample(self, scores):
         scores = scores / self.temperature
         sorted_logits, sorted_indices = torch.sort(scores, descending=False)
         cumulative_probs = sorted_logits.softmax(dim=-1).cumsum(dim=-1)

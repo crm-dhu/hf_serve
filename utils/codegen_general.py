@@ -10,6 +10,8 @@ class CodeGenTextGen(BaseAiModel):
 
     def __init__(self, model_path, model_format):
         self.new_tokens = 20
+        self.temperature = 0.75
+        self.top_p = 0.95
         self.model_format = model_format
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         if model_format == "torchscript":
@@ -35,7 +37,7 @@ class CodeGenTextGen(BaseAiModel):
                 input_feed = {"input_ids": self.input_ids, "attention_mask": self.attention_mask}
                 model_outputs = self.model.run(output_names=["logits"], input_feed=input_feed)
                 next_token_logits = model_outputs[0][:, -1, :]
-                next_token_scores = torch.from_numpy(next_token_logits)
+                next_token_scores = self.nucleus_sample(torch.from_numpy(next_token_logits))
                 probs = torch.nn.functional.softmax(next_token_scores, dim=-1)
                 next_tokens = torch.multinomial(probs, num_samples=1).numpy()
                 self.input_ids = np.concatenate([self.input_ids, next_tokens], axis=-1)
@@ -47,18 +49,31 @@ class CodeGenTextGen(BaseAiModel):
                     next_token_logits = model_outputs["logits"][:, -1, :]
                 else:
                     next_token_logits = model_outputs[0][:, -1, :]
-                probs = torch.nn.functional.softmax(next_token_logits, dim=-1)
+                next_token_scores = self.top_p_sample(next_token_logits)
+                probs = torch.nn.functional.softmax(next_token_scores, dim=-1)
                 next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
                 self.input_ids = torch.cat([self.input_ids, next_tokens[:, None]], dim=-1)
 
     def postprocess(self):
         return self.tokenizer.batch_decode(self.input_ids)
+    def nucleus_sample(self, scores):
+        scores = scores / self.temperature
+        sorted_logits, sorted_indices = torch.sort(scores, descending=False)
+        cumulative_probs = sorted_logits.softmax(dim=-1).cumsum(dim=-1)
+
+        # Remove tokens with cumulative top_p above the threshold (token with 0 are kept)
+        sorted_indices_to_remove = cumulative_probs <= (1 - self.top_p)
+
+        # scatter sorted tensors to original indexing
+        indices_to_remove = sorted_indices_to_remove.scatter(1, sorted_indices, sorted_indices_to_remove)
+        scores = scores.masked_fill(indices_to_remove, -float("Inf"))
+        return scores
 
 
 if __name__ == "__main__":
     for fmt in ["huggingface", "torchscript", "onnx"]:
         pipeline = CodeGenTextGen("./codegen_text_generation", fmt)
-        text = ["This is a great" for _ in range(1)]
+        text = ["This is a great" for _ in range(3)]
 
         import time
         t0 = time.time()
