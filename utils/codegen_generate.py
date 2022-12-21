@@ -1,6 +1,5 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
-import numpy as np
 
 class EagerCodeGenTextGenerator():
 

@@ -2,7 +2,6 @@ import numpy as np
 import torch
 from BaseAiModel import BaseAiModel
 from onnxruntime import InferenceSession
-from scipy import special as sp
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
