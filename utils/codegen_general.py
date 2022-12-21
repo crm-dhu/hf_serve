@@ -8,8 +8,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 class CodeGenTextGen(BaseAiModel):
 
-    def __init__(self, model_path, model_format):
-        self.new_tokens = 20
+    def __init__(self, model_path, model_format, decode_method="nucleus"):
+        self.new_tokens = 30
         self.temperature = 0.75
         self.top_p = 0.95
         self.model_format = model_format
@@ -21,7 +21,12 @@ class CodeGenTextGen(BaseAiModel):
         elif model_format == "huggingface":
             self.model = AutoModelForCausalLM.from_pretrained(model_path)
         else:
-            raise Exception(f"{model_format} is not supported")
+            raise ValueError(f"model format: {model_format} is not supported")
+        if decode_method in ["nucleus", "greedy"]:
+            self.decode_method = decode_method
+        else:
+            raise ValueError(f"decoding method: {decode_method} is not supported")
+
 
     def preprocess(self, text):
         if self.model_format == "onnx":
@@ -37,9 +42,12 @@ class CodeGenTextGen(BaseAiModel):
                 input_feed = {"input_ids": self.input_ids, "attention_mask": self.attention_mask}
                 model_outputs = self.model.run(output_names=["logits"], input_feed=input_feed)
                 next_token_logits = model_outputs[0][:, -1, :]
-                next_token_scores = self.nucleus_sample(torch.from_numpy(next_token_logits))
-                probs = torch.nn.functional.softmax(next_token_scores, dim=-1)
-                next_tokens = torch.multinomial(probs, num_samples=1).numpy()
+                if self.decode_method == "nucleus":
+                    next_token_scores = self.nucleus_sample(torch.from_numpy(next_token_logits))
+                    probs = next_token_scores.softmax(dim=-1)
+                    next_tokens = torch.multinomial(probs, num_samples=1).numpy()
+                else:
+                    next_tokens = np.expand_dims(np.argmax(next_token_logits, axis=-1), 1)
                 self.input_ids = np.concatenate([self.input_ids, next_tokens], axis=-1)
                 self.attention_mask = np.concatenate([self.attention_mask, np.ones_like(next_tokens)], axis=-1)
         else:
@@ -49,9 +57,12 @@ class CodeGenTextGen(BaseAiModel):
                     next_token_logits = model_outputs["logits"][:, -1, :]
                 else:
                     next_token_logits = model_outputs[0][:, -1, :]
-                next_token_scores = self.nucleus_sample(next_token_logits)
-                probs = torch.nn.functional.softmax(next_token_scores, dim=-1)
-                next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
+                if self.decode_method == "nucleus":
+                    next_token_scores = self.nucleus_sample(next_token_logits)
+                    probs = next_token_scores.softmax(dim=-1)
+                    next_tokens = torch.multinomial(probs, num_samples=1).squeeze(1)
+                else:
+                    next_tokens = torch.argmax(next_token_logits, dim=-1)
                 self.input_ids = torch.cat([self.input_ids, next_tokens[:, None]], dim=-1)
 
     def postprocess(self):
@@ -73,7 +84,7 @@ class CodeGenTextGen(BaseAiModel):
 if __name__ == "__main__":
     for fmt in ["huggingface", "torchscript", "onnx"]:
         pipeline = CodeGenTextGen("./codegen_text_generation", fmt)
-        text = ["This is a great" for _ in range(3)]
+        text = ["This is a great" for _ in range(1)]
 
         import time
         t0 = time.time()
