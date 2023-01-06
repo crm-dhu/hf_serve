@@ -1,4 +1,4 @@
-FROM git.infra.igodigital.com:4567/pi/cobaltstarfish/ubuntu:20.04
+FROM ubuntu:20.04
 LABEL description="Marketing Cloud Einstein Kernel hugging face example run"
 
 RUN apt-get update && apt-get -y install sudo python3.8
