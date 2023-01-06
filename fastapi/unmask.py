@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from typing import List
 from transformers import pipeline
 
 # load the model bert-base-uncased
@@ -25,7 +26,7 @@ async def hello():
 
 
 @app.post("/unmask")
-async def unmask(payload: Input):
+async def unmask(payload: Input) -> List[Output]:
     masked_str = payload.input
     y = unmasked(masked_str)
     return [Output.parse_obj(i) for i in y]

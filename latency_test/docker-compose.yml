@@ -6,6 +6,8 @@ services:
       - locust
   fastapi:
     image: hf_fastapi
+    ports:
+      - "8081:8081"
     links:
       - locust
   torchserve:
