@@ -9,11 +9,11 @@ unmasker = pipeline('fill-mask', model='bert-base-uncased')
 app = FastAPI()
 
 
-class Input(BaseModel):
+class ModelInput(BaseModel):
     input: str
 
 
-class Output(BaseModel):
+class ModelOutput(BaseModel):
     score: float
     token: int
     token_str: str
@@ -24,19 +24,15 @@ class Output(BaseModel):
 async def hello():
     return "use endpoint /unmask and provide a masked_str with [MASK] filling the token being masked."
 
-
 @app.post("/unmask")
-async def unmask(payload: Input) -> List[Output]:
+async def unmask(payload: ModelInput) -> List[ModelOutput]:
     masked_str = payload.input
-    y = unmasked(masked_str)
-    return [Output.parse_obj(i) for i in y]
+    return unmasked(masked_str)
 
-
-def unmasked(x: str):
+def unmasked(x: str) -> List[ModelOutput]:
     y = unmasker(x)
     y.sort(key=lambda i: i['score'], reverse=True)
-    return y
-
+    return [ModelOutput.parse_obj(i) for i in y]
 
 @app.on_event("startup")
 async def init():
